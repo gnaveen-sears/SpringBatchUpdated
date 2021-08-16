@@ -23,6 +23,7 @@ import org.springframework.batch.item.file.transform.Range;
 import org.springframework.batch.item.support.ClassifierCompositeItemWriter;
 //import org.springframework.batch.item.validator.ValidatingItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 //import org.springframework.core.io.ClassPathResource;
@@ -54,12 +55,16 @@ public class JobConfiguration {
 	@Autowired
 	public DataSource dataSource;
 
+	
+	@Value("${spring.csvfile}")
+	private Resource csvResource;
+	
 	@Bean
 	public FlatFileItemReader<Contacts> contactsItemReader() {
 		FlatFileItemReader<Contacts> reader = new FlatFileItemReader<>();
 
 		reader.setLinesToSkip(1);
-		reader.setResource(new FileSystemResource("/data/Contacts.csv"));
+		reader.setResource(csvResource);
 
 		DefaultLineMapper<Contacts> contactsLineMapper = new DefaultLineMapper<>();
 
@@ -75,10 +80,15 @@ public class JobConfiguration {
 		return reader;
 	}
 
+	
+	@Value("${spring.flatfile}")
+	private Resource flatResource;
+	
+	
 	@Bean
 	public FlatFileItemReader<Address> addressItemReader() {
 		FlatFileItemReader<Address> reader1 = new FlatFileItemReader<>();
-		reader1.setResource(new FileSystemResource("/data/Addresses.dat"));
+		reader1.setResource(flatResource);
 		reader1.setLineMapper(new DefaultLineMapper<Address>() {
 			{
 				setLineTokenizer(new FixedLengthTokenizer() {
@@ -162,7 +172,9 @@ public class JobConfiguration {
 		return itemWriter1;
 	}
 	
-	private Resource outputResource = new FileSystemResource("Output/Skipped.csv");
+	@Value("${spring.outfile}")
+	private Resource outputResource;
+	//private Resource outputResource = new FileSystemResource("Output/Skipped.csv");
 //	 @Bean 
 //	    public FlatFileItemWriter<Address> writer2() 
 //	    {
