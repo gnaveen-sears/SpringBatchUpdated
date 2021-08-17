@@ -85,29 +85,52 @@ public class JobConfiguration {
 	private Resource flatResource;
 	
 	
+//	@Bean
+//	public FlatFileItemReader<Address> addressItemReader() {
+//		FlatFileItemReader<Address> reader1 = new FlatFileItemReader<>();
+//		reader1.setResource(flatResource);
+//		reader1.setLineMapper(new DefaultLineMapper<Address>() {
+//			{
+//				setLineTokenizer(new FixedLengthTokenizer() {
+//					{
+//						setNames(new String []{"customerPhone", "addressType", "addressLine1", "addressLine2", "city", "stateCode",
+//								"zipcode", "zipplus4", "addressType2", "addressLine12", "addressLine22", "city2",
+//								"stateCode2", "zipcode2", "zipplus42"});
+//						setColumns(new Range[] { new Range(1, 10), new Range(11, 11), new Range(12, 41),
+//								new Range(42, 71), new Range(72, 86), new Range(87, 88), new Range(89, 93),
+//								new Range(94, 97), new Range(98, 98), new Range(99, 128), new Range(129, 158),
+//								new Range(159, 173), new Range(174, 175), new Range(176, 180), new Range(181) });
+//					}
+//				});
+//				setFieldSetMapper(new AddressRowMapper());
+//			}
+//		});
+//		return reader1;
+//	}
+	
 	@Bean
 	public FlatFileItemReader<Address> addressItemReader() {
 		FlatFileItemReader<Address> reader1 = new FlatFileItemReader<>();
 		reader1.setResource(flatResource);
-		reader1.setLineMapper(new DefaultLineMapper<Address>() {
-			{
-				setLineTokenizer(new FixedLengthTokenizer() {
-					{
-						setNames(new String []{"customerPhone", "addressType", "addressLine1", "addressLine2", "city", "stateCode",
-								"zipcode", "zipplus4", "addressType2", "addressLine12", "addressLine22", "city2",
-								"stateCode2", "zipcode2", "zipplus42"});
-						setColumns(new Range[] { new Range(1, 10), new Range(11, 11), new Range(12, 41),
-								new Range(42, 71), new Range(72, 86), new Range(87, 88), new Range(89, 93),
-								new Range(94, 97), new Range(98, 98), new Range(99, 128), new Range(129, 158),
-								new Range(159, 173), new Range(174, 175), new Range(176, 180), new Range(181) });
-					}
-				});
-				setFieldSetMapper(new AddressRowMapper());
-			}
-		});
+		DefaultLineMapper<Address> addressLineMapper = new DefaultLineMapper<>();
+		FixedLengthTokenizer tokenizer = new FixedLengthTokenizer();
+		tokenizer.setNames(new String []{"customerPhone", "addressType", "addressLine1", "addressLine2", "city", "stateCode",
+				"zipcode", "zipplus4", "addressType2", "addressLine12", "addressLine22", "city2",
+				"stateCode2", "zipcode2", "zipplus42"});
+		tokenizer.setColumns(new Range[] { new Range(1, 10), new Range(11, 11), new Range(12, 41),
+				new Range(42, 71), new Range(72, 86), new Range(87, 88), new Range(89, 93),
+				new Range(94, 97), new Range(98, 98), new Range(99, 128), new Range(129, 158),
+				new Range(159, 173), new Range(174, 175), new Range(176, 180), new Range(181) });
+		
+		addressLineMapper.setLineTokenizer(tokenizer);
+		addressLineMapper.setFieldSetMapper(new AddressRowMapper());
+		addressLineMapper.afterPropertiesSet();
+
+		reader1.setLineMapper(addressLineMapper);
 
 		return reader1;
 	}
+
 
 	@Bean
 	public JdbcBatchItemWriter<Contacts> contactsItemWriter() throws Exception {
