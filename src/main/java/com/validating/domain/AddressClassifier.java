@@ -1,9 +1,12 @@
 package com.validating.domain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.classify.Classifier;
 
 public class AddressClassifier implements Classifier<Address, ItemWriter<? super Address>>{
+	private static final Logger logger = LoggerFactory.getLogger(AddressClassifier.class);
 	private ItemWriter<Address> trueWriter;
 	private ItemWriter<Address> falseWriter;
 	 public AddressClassifier(ItemWriter<Address> trueWriter, ItemWriter<Address> falseWriter) {
@@ -12,7 +15,12 @@ public class AddressClassifier implements Classifier<Address, ItemWriter<? super
 	        }
 	@Override
 	public ItemWriter<? super Address> classify(Address address) {
-		return !address.getValid()? falseWriter : trueWriter;
+		logger.debug("Address Classifier");
+		if(address.getValid()==true){
+			return trueWriter;
+		}
+		else
+			return falseWriter;
 	}
 
 }

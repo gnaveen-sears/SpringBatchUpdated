@@ -3,13 +3,17 @@ package com.validating.domain;
 
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 public class FilteringAddressProcessor implements ItemProcessor<Address, Address> {
+	private static final Logger logger = LoggerFactory.getLogger(FilteringAddressProcessor.class);
 	@Override
 	 public Address process(Address p) throws Exception {
+		logger.debug("Processor for Address ");
 		
 
 //		Address address = new Address();
