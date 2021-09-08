@@ -36,7 +36,7 @@ public class Contacts {
 	}
 
 	public String getPhone() {
-		return Phone;
+		return Phone.trim();
 	}
 
 
@@ -55,6 +55,7 @@ public class Contacts {
 	public String getDesignation() {
 		return Designation;
 	}
+	
 	public boolean isValid() {
 		return valid;
 	}
