@@ -40,7 +40,7 @@ public class FilteringAddressProcessor implements ItemProcessor<Address, Address
 				p.setError(error);
 			}
 
-			if (p.getZipcode() == null  )
+			if (p.getZipcode() == null || StringUtils.isNumeric(p.getZipcode()))
 
 			{
 				p.setValid(false);
@@ -48,13 +48,6 @@ public class FilteringAddressProcessor implements ItemProcessor<Address, Address
 				p.setError(error);
 			}
 			
-			if(StringUtils.isNumeric(p.getZipcode()))
-			{
-				p.setValid(false);
-				String error = "Zip Code is not mentioned or not valid";
-				p.setError(error);
-			}
-
 		}
 
 		if (check2.contentEquals("s")) {

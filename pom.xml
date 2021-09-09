@@ -6,9 +6,9 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.validating</groupId>
+	<groupId>com.springbatch</groupId>
 
-	<artifactId>validating</artifactId>
+	<artifactId>springbatch-updated</artifactId>
 
 	<version>0.0.1-SNAPSHOT</version>
 
@@ -84,11 +84,9 @@
 		</dependency>
 
 		<dependency>
-
-			<groupId>mysql</groupId>
-
-			<artifactId>mysql-connector-java</artifactId>
-
+		    <groupId>mysql</groupId>
+		    <artifactId>mysql-connector-java</artifactId>
+		    <version>8.0.20</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->

@@ -16,7 +16,7 @@ public class AddressClassifier implements Classifier<Address, ItemWriter<? super
 	@Override
 	public ItemWriter<? super Address> classify(Address address) {
 		logger.debug("Address Classifier");
-		if(address.getValid()==true){
+		if(address.getValid()){
 			return trueWriter;
 		}
 		else

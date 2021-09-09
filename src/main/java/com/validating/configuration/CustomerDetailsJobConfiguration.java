@@ -6,38 +6,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.explore.JobExplorer;
-import org.springframework.batch.core.explore.support.MapJobExplorerFactoryBean;
-import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean;
-//import org.springframework.batch.item.ItemStream;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.FlatFileItemWriter;
-//import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
-//import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.FixedLengthTokenizer;
 import org.springframework.batch.item.file.transform.Range;
 import org.springframework.batch.item.support.ClassifierCompositeItemWriter;
-//import org.springframework.batch.item.validator.ValidatingItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-//import org.springframework.core.io.ClassPathResource;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import com.validating.domain.Address;
 import com.validating.domain.AddressClassifier;
@@ -49,10 +38,8 @@ import com.validating.domain.FilteringAddressProcessor;
 import com.validating.domain.FilteringItemProcessor;
 
 @Configuration
-@EnableBatchProcessing
-public class JobConfiguration {
-	
-	private static final Logger logger = LoggerFactory.getLogger(JobConfiguration.class);
+public class CustomerDetailsJobConfiguration {
+	private static final Logger logger = LoggerFactory.getLogger(CustomerDetailsJobConfiguration.class);
 	
 	@Autowired
 	public JobBuilderFactory jobBuilderFactory;
@@ -63,85 +50,111 @@ public class JobConfiguration {
 	@Autowired
 	public DataSource dataSource;
 
-	@Bean
-    DefaultBatchConfigurer batchConfigurer() {
-
-        return new DefaultBatchConfigurer() {
-
-
-
-            private JobRepository jobRepository;
-
-            private JobExplorer jobExplorer;
-
-            private JobLauncher jobLauncher;
-
-
-
-            {
-
-                MapJobRepositoryFactoryBean jobRepositoryFactory = new MapJobRepositoryFactoryBean();
-
-                try {
-
-                    this.jobRepository = jobRepositoryFactory.getObject();
-
-                    MapJobExplorerFactoryBean jobExplorerFactory = new MapJobExplorerFactoryBean(jobRepositoryFactory);
-
-                    this.jobExplorer = jobExplorerFactory.getObject();
-
-                    SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
-
-                    jobLauncher.setJobRepository(jobRepository);
-
-                    jobLauncher.afterPropertiesSet();
-
-                    this.jobLauncher = jobLauncher;
-
-
-
-                } catch (Exception e) {
-
-                }
-
-            }
-
-
-
-            @Override
-
-            public JobRepository getJobRepository() {
-
-                return jobRepository;
-
-            }
-
-
-
-            @Override
-
-            public JobExplorer getJobExplorer() {
-
-                return jobExplorer;
-
-            }
-
-
-
-            @Override
-
-            public JobLauncher getJobLauncher() {
-
-                return jobLauncher;
-
-            }
-
-        };
-
-    }
+	@Value("${contacts.error.outfile}")
+	private String contactsErrorsPath;
 	
-	@Value("${spring.csvfile}")
-	private Resource csvResource;
+	@Value("${address.error.outfile}")
+	private String addressErrorsPath;
+
+	@Value("${contacts.csvfile}")
+	private String csvResourcePath;
+	
+	@Value("${address.flatfile}")
+	private String flatResourcePath;
+
+	
+	/*
+	 * @Bean DefaultBatchConfigurer batchConfigurer() {
+	 * 
+	 * return new DefaultBatchConfigurer() {
+	 * 
+	 * 
+	 * 
+	 * private JobRepository jobRepository;
+	 * 
+	 * private JobExplorer jobExplorer;
+	 * 
+	 * private JobLauncher jobLauncher;
+	 * 
+	 * 
+	 * 
+	 * {
+	 * 
+	 * MapJobRepositoryFactoryBean jobRepositoryFactory = new
+	 * MapJobRepositoryFactoryBean();
+	 * 
+	 * try {
+	 * 
+	 * this.jobRepository = jobRepositoryFactory.getObject();
+	 * 
+	 * MapJobExplorerFactoryBean jobExplorerFactory = new
+	 * MapJobExplorerFactoryBean(jobRepositoryFactory);
+	 * 
+	 * this.jobExplorer = jobExplorerFactory.getObject();
+	 * 
+	 * SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
+	 * 
+	 * jobLauncher.setJobRepository(jobRepository);
+	 * 
+	 * jobLauncher.afterPropertiesSet();
+	 * 
+	 * this.jobLauncher = jobLauncher;
+	 * 
+	 * 
+	 * 
+	 * } catch (Exception e) {
+	 * 
+	 * }
+	 * 
+	 * }
+	 * 
+	 * 
+	 * 
+	 * @Override
+	 * 
+	 * public JobRepository getJobRepository() {
+	 * 
+	 * return jobRepository;
+	 * 
+	 * }
+	 * 
+	 * 
+	 * 
+	 * @Override
+	 * 
+	 * public JobExplorer getJobExplorer() {
+	 * 
+	 * return jobExplorer;
+	 * 
+	 * }
+	 * 
+	 * 
+	 * 
+	 * @Override
+	 * 
+	 * public JobLauncher getJobLauncher() {
+	 * 
+	 * return jobLauncher;
+	 * 
+	 * }
+	 * 
+	 * };
+	 * 
+	 * }
+	 */
+	
+	@Bean(name = "aimsDataSource")
+	@Primary
+	public DataSource dataSource(@Value("${training.datasource.driverclass}") String driverClassName,
+									 @Value("${training.datasource.url}") String url, @Value("${training.datasource.username}") String userName,
+									 @Value("${training.datasource.password}") String password) {
+		DriverManagerDataSource dataSource = new DriverManagerDataSource();
+		dataSource.setDriverClassName(driverClassName);
+		dataSource.setUrl(url);
+		dataSource.setUsername(userName);
+		dataSource.setPassword(password);
+		return dataSource;
+	}
 	
 	@Bean
 	public FlatFileItemReader<Contacts> contactsItemReader() {
@@ -149,7 +162,7 @@ public class JobConfiguration {
 		FlatFileItemReader<Contacts> reader = new FlatFileItemReader<>();
 
 		reader.setLinesToSkip(1);
-		reader.setResource(csvResource);
+		reader.setResource(new ClassPathResource(csvResourcePath));
 
 		DefaultLineMapper<Contacts> contactsLineMapper = new DefaultLineMapper<>();
 
@@ -166,14 +179,11 @@ public class JobConfiguration {
 	}
 
 	
-	@Value("${spring.flatfile}")
-	private Resource flatResource;
-	
 	@Bean
 	public FlatFileItemReader<Address> addressItemReader() {
 		logger.debug("FllatFileReader for Address  ---> Reading .DAT File");
 		FlatFileItemReader<Address> reader1 = new FlatFileItemReader<>();
-		reader1.setResource(flatResource);
+		reader1.setResource(new ClassPathResource(flatResourcePath));
 		DefaultLineMapper<Address> addressLineMapper = new DefaultLineMapper<>();
 		FixedLengthTokenizer tokenizer = new FixedLengthTokenizer();
 		tokenizer.setNames(new String []{"customerPhone", "addressType", "addressLine1", "addressLine2", "city", "stateCode",
@@ -200,7 +210,9 @@ public class JobConfiguration {
 		System.out.println("Inside Contacts  Writer");
 		JdbcBatchItemWriter<Contacts> itemWriter = new JdbcBatchItemWriter<>();
 
-		itemWriter.setDataSource(this.dataSource);
+		// Even if passing NULL here, Spring boot will replace these at runtime with values obtained by replacing placeholders like 
+		// "${training.datasource.driverclass}" - MAGIC!!
+		itemWriter.setDataSource(dataSource(null, null, null, null));  
 		itemWriter
 				.setSql("INSERT INTO CONTACTS VALUES (:Last_Name, :First_Name, :Phone, :Email, :Title, :Designation)");
 		itemWriter.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Contacts>());
@@ -224,7 +236,7 @@ public class JobConfiguration {
 
 	    FlatFileItemWriter<Address> flatFileItemWriter = new FlatFileItemWriter<>();
 	    flatFileItemWriter.setName("AddressSkippedWriter");
-	    flatFileItemWriter.setResource(outputResource);
+	    flatFileItemWriter.setResource(new FileSystemResource(addressErrorsPath));
 	    flatFileItemWriter.setLineAggregator(lineAggregator);
 
 	    return flatFileItemWriter;
@@ -236,7 +248,8 @@ public class JobConfiguration {
 		System.out.println("Inside Address  Writer");
 		JdbcBatchItemWriter<Address> itemWriter1 = new JdbcBatchItemWriter<>();
 
-		itemWriter1.setDataSource(this.dataSource);
+		// Look for MAGIC!! to understand this
+		itemWriter1.setDataSource(dataSource(null, null, null, null));
 		itemWriter1.setSql(
 				"INSERT INTO ADDRESS VALUES (:customerPhone, :addressType, :addressLine1, :addressLine2, :city, :stateCode,:zipcode,:zipplus4,:addressType2,:addressLine12,:addressLine22,:city2,:stateCode2,:zipcode2,:zipplus42)");
 		itemWriter1.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Address>());
@@ -245,30 +258,8 @@ public class JobConfiguration {
 		return itemWriter1;
 	}
 	
-	@Value("${spring.outfile}")
-	private Resource outputResource;
 	
-//	@Bean
-//	public FlatFileItemWriter<Contacts> contactsSkipWriter() {
-//		logger.debug("JDBC writer for contacts ERRORS ---> Writing into csv file");
-//		System.out.println("Inside Contacts Skip Writer");
-//	    BeanWrapperFieldExtractor<Contacts> fieldExtractor = new BeanWrapperFieldExtractor<>();
-//	    fieldExtractor.setNames(new String[] {"Error"});
-//	    fieldExtractor.afterPropertiesSet();
-//
-//	    DelimitedLineAggregator<Contacts> lineAggregator = new DelimitedLineAggregator<>();
-//	    lineAggregator.setDelimiter(",");
-//	    lineAggregator.setFieldExtractor(fieldExtractor);
-//
-//	    FlatFileItemWriter<Contacts> flatFileItemWriter = new FlatFileItemWriter<>();
-//	    flatFileItemWriter.setName("ContactsItemWriter");
-//	    flatFileItemWriter.setResource(outputResource);
-//	    flatFileItemWriter.setLineAggregator(lineAggregator);
-//
-//	    return flatFileItemWriter;
-//	}
-	private Resource outputResource2 = new FileSystemResource("Output/Skipped.csv");
-	
+
 	@Bean
     public FlatFileItemWriter<Contacts> contactsSkipWriter() 
     {
@@ -276,7 +267,7 @@ public class JobConfiguration {
         FlatFileItemWriter<Contacts> writer = new FlatFileItemWriter<>();
          
         //Set output file location
-        writer.setResource(outputResource2);
+        writer.setResource(new FileSystemResource(contactsErrorsPath));
          
         //All job repetitions should "append" to same output file
         writer.setAppendAllowed(true);
@@ -324,8 +315,8 @@ public class JobConfiguration {
 	}
 
 	@Bean
-	public Step step1() throws Exception {
-		return stepBuilderFactory.get("step1").<Contacts, Contacts> chunk(1).reader(contactsItemReader())
+	public Step customerStep() throws Exception {
+		return stepBuilderFactory.get("customerStep").<Contacts, Contacts> chunk(1).reader(contactsItemReader())
 				.processor(itemProcessor())
 				.writer(classifierCustomerCompositeItemWriter2())
 				.stream(contactsSkipWriter())
@@ -333,8 +324,8 @@ public class JobConfiguration {
 	}
 
 	@Bean
-	public Step step2() throws Exception {
-		return stepBuilderFactory.get("step2").<Address, Address> chunk(1).reader(addressItemReader())
+	public Step addressStep() throws Exception {
+		return stepBuilderFactory.get("addressStep").<Address, Address> chunk(1).reader(addressItemReader())
 				.processor(addressProcessor())
 				.writer(classifierCustomerCompositeItemWriter())
 				.stream(addressSkipWriter())
@@ -343,6 +334,6 @@ public class JobConfiguration {
 
 	@Bean
 	public Job job() throws Exception {
-		return jobBuilderFactory.get("job").start(step1()).next(step2()).build();
+		return jobBuilderFactory.get("CustomerDetailsJob").start(customerStep()).next(addressStep()).build();
 	}
 }
